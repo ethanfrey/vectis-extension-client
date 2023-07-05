@@ -7,6 +7,7 @@ import SimpleDropdown from "../Dropdowns/SimpleDropdown";
 const chains = [
   { name: "Juno Testnet", chainId: "uni-6" },
   { name: "Stargaze Testnet", chainId: "elgafar-1" },
+  { name: "Pulsarium DevNet", chainId: "pulsar-dev-1" },
 ];
 
 const Layout: React.FC<PropsWithChildren<{}>> = ({ children }) => {

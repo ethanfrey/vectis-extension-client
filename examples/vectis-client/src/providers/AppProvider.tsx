@@ -43,7 +43,7 @@ export const AppContext = React.createContext<AppContextValue | null>(null);
 
 const AppProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   const [todos, setTodos] = useState<ITodo[]>([]);
-  const [chain, setChain] = useState("uni-6");
+  const [chain, setChain] = useState("localhost");
   const [userKey, setUserKey] = useState<KeyInfo | null>(null);
   const [vectisClient, setVectisClient] = useState<VectisCosmosProvider | null>(null);
   const [client, setClient] = useState<SigningCosmWasmClient | null>(null);
@@ -71,10 +71,42 @@ const AppProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   const connectWallet = async () => {
     try {
       const vectis = await getVectisForCosmos();
+
+      const localnet = {
+        chainId: "pulsar-dev-1",
+        chainName: "localhost",
+        prettyName: "Pulsarium DevNet",
+        rpcUrl: "https://localhost:26657",
+        restUrl: "http://localhost:1317",
+        bech32Prefix: "pulsar",
+        bip44: {
+          coinType: 118
+        }, 
+        stakeCurrency: {
+          coinDenom: "Pulse",
+          coinMinimalDenom: "upulse",
+          coinDecimals: 6,
+        },
+        feeCurrencies: [{
+          coinDenom: "Pulse",
+          coinMinimalDenom: "upulse",
+          coinDecimals: 6,
+          gasPriceStep: {
+            low: 0.01,
+            average: 0.025,
+            high: 0.04
+          }
+        }],
+        features: [],
+        currencies: [],
+        ecosystem: 'cosmos',
+      };
+      await vectis.suggestChains([localnet]);
+
       // Enable connection to allow read and write permission;
       const key = await vectis.getKey(chain);
       // This method decide for you what is the best signer to sign transaction
-      const signer = await vectis.getOfflineSignerAuto(chain);
+      const signer = await vectis.getOfflineSignerDirect(chain);
 
       const config = CHAIN_CONFIG[chain as keyof typeof CHAIN_CONFIG];
       const client = await SigningCosmWasmClient.connectWithSigner(config.rpcUrl, signer, {
