@@ -34,9 +34,9 @@ const SimpleDropdown: React.FC<PropsWithChildren<DropdownProps>> = ({ options, c
           )}
           onClick={el.disabled ? () => {} : click}
         >
-          <p className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <p className={`capitalize`}>{el.name}</p>
-          </p>
+          </div>
         </div>
       </li>
     );

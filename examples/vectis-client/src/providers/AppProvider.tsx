@@ -11,6 +11,7 @@ import { TodoStatus } from "../interfaces/TodoStatus";
 const CODES_ID = {
   "uni-6": 2545,
   "elgafar-1": 2609,
+  "pulsar-dev-1": 1,
 };
 
 const CHAIN_CONFIG = {
@@ -21,6 +22,10 @@ const CHAIN_CONFIG = {
   "elgafar-1": {
     gasPrice: GasPrice.fromString("0.04ustars"),
     rpcUrl: "https://rpc.testcosmos.directory/stargazetestnet",
+  },
+  "pulsar-dev-1": {
+    gasPrice: GasPrice.fromString("0.025upulse"),
+    rpcUrl: "http://localhost:26657",
   },
 };
 
@@ -43,7 +48,8 @@ export const AppContext = React.createContext<AppContextValue | null>(null);
 
 const AppProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   const [todos, setTodos] = useState<ITodo[]>([]);
-  const [chain, setChain] = useState("localhost");
+  const [chain, setChain] = useState("pulsar-dev-1");
+  // const [chain, setChain] = useState("uni-6");
   const [userKey, setUserKey] = useState<KeyInfo | null>(null);
   const [vectisClient, setVectisClient] = useState<VectisCosmosProvider | null>(null);
   const [client, setClient] = useState<SigningCosmWasmClient | null>(null);
@@ -76,7 +82,7 @@ const AppProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
         chainId: "pulsar-dev-1",
         chainName: "localhost",
         prettyName: "Pulsarium DevNet",
-        rpcUrl: "https://localhost:26657",
+        rpcUrl: "http://localhost:26657",
         restUrl: "http://localhost:1317",
         bech32Prefix: "pulsar",
         bip44: {
@@ -112,6 +118,14 @@ const AppProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
       const client = await SigningCosmWasmClient.connectWithSigner(config.rpcUrl, signer, {
         gasPrice: config.gasPrice,
       });
+
+      // TODO: remove only for demo
+      const address = (await signer.getAccounts())[0].address;
+      const balance = await client.getBalance(address, "upulse");
+      console.info(`${address} has balance: ${balance.amount} upulse`);
+
+      // TODO: Try to send (demo)
+      await client.sendTokens(address, "pulsar1hsm76p4ahyhl5yh3ve9ur49r5kemhp2rwdtsdr", [{ amount: "1000000", denom: "upulse" }], "auto", "Sent from Vectis");
 
       setUserKey(key);
       setVectisClient(vectis);
