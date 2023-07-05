@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { useLocalStorage } from "react-use";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { GasPrice } from "@cosmjs/stargate";
+import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { VectisCosmosProvider, getVectisForCosmos, KeyInfo } from "@vectis/extension-client";
 
 import { ITodo } from "../interfaces/ITodo";
@@ -11,7 +12,7 @@ import { TodoStatus } from "../interfaces/TodoStatus";
 const CODES_ID = {
   "uni-6": 2545,
   "elgafar-1": 2609,
-  "pulsar-dev-1": 1,
+  "pulsar-dev-1": 4,
 };
 
 const CHAIN_CONFIG = {
@@ -115,17 +116,20 @@ const AppProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
       const signer = await vectis.getOfflineSignerDirect(chain);
 
       const config = CHAIN_CONFIG[chain as keyof typeof CHAIN_CONFIG];
-      const client = await SigningCosmWasmClient.connectWithSigner(config.rpcUrl, signer, {
-        gasPrice: config.gasPrice,
-      });
+      const tendermintClient = await Tendermint37Client.connect(config.rpcUrl);
+      const client = await SigningCosmWasmClient.createWithSigner(
+        tendermintClient,
+        signer, {
+          gasPrice: config.gasPrice,
+        });
 
-      // TODO: remove only for demo
-      const address = (await signer.getAccounts())[0].address;
-      const balance = await client.getBalance(address, "upulse");
-      console.info(`${address} has balance: ${balance.amount} upulse`);
+      // // TODO: remove only for demo
+      // const address = (await signer.getAccounts())[0].address;
+      // const balance = await client.getBalance(address, "upulse");
+      // console.info(`${address} has balance: ${balance.amount} upulse`);
 
-      // TODO: Try to send (demo)
-      await client.sendTokens(address, "pulsar1hsm76p4ahyhl5yh3ve9ur49r5kemhp2rwdtsdr", [{ amount: "1000000", denom: "upulse" }], "auto", "Sent from Vectis");
+      // // TODO: Try to send (demo)
+      // await client.sendTokens(address, "pulsar1hsm76p4ahyhl5yh3ve9ur49r5kemhp2rwdtsdr", [{ amount: "1000000", denom: "upulse" }], "auto", "Sent from Vectis");
 
       setUserKey(key);
       setVectisClient(vectis);
