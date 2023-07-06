@@ -4,10 +4,15 @@ import { useLocalStorage } from "react-use";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { GasPrice } from "@cosmjs/stargate";
 import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
-import { VectisCosmosProvider, getVectisForCosmos, KeyInfo } from "@vectis/extension-client";
+/* import { VectisCosmosProvider, getVectisForCosmos, KeyInfo } from "@vectis/extension-client"; */
+import { Bech32Address } from '@keplr-wallet/cosmos';
 
 import { ITodo } from "../interfaces/ITodo";
 import { TodoStatus } from "../interfaces/TodoStatus";
+import { Buffer } from 'buffer';
+
+// @ts-ignore
+window.Buffer = Buffer;
 
 const CODES_ID = {
   "uni-6": 2545,
@@ -26,12 +31,12 @@ const CHAIN_CONFIG = {
   },
   "pulsar-dev-1": {
     gasPrice: GasPrice.fromString("0.025upulse"),
-    rpcUrl: "http://localhost:26657",
+    rpcUrl: "http://192.168.178.86:26657",
   },
 };
 
 interface AppContextValue {
-  userKey: KeyInfo | null;
+  userKey: any;
   connectWallet: () => void;
   todos: ITodo[];
   addTodo: (description: string) => void;
@@ -51,14 +56,16 @@ const AppProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   const [todos, setTodos] = useState<ITodo[]>([]);
   const [chain, setChain] = useState("pulsar-dev-1");
   // const [chain, setChain] = useState("uni-6");
-  const [userKey, setUserKey] = useState<KeyInfo | null>(null);
-  const [vectisClient, setVectisClient] = useState<VectisCosmosProvider | null>(null);
+  const [userKey, setUserKey] = useState<any | null>(null);
+  /* const [vectisClient, setVectisClient] = useState<VectisCosmosProvider | null>(null); */
   const [client, setClient] = useState<SigningCosmWasmClient | null>(null);
   const [allowPermission, setAllowPermission] = useLocalStorage<boolean>("allowPermission");
   const [contractAddr, setContractAddr] = useLocalStorage<string>(`${userKey?.address}contractAddr`);
 
   const instantiateTodoContract = async () => {
     if (!userKey || !client) return toast.error("Please connect your wallet");
+    console.log("instantiateTodoContract");
+    console.log("userKey.address", userKey.address);
     const { contractAddress } = await toast.promise(
       client.instantiate(userKey.address, CODES_ID[chain as keyof typeof CODES_ID], { owner: userKey.address }, "Todo-List", "auto"),
       {
@@ -75,17 +82,24 @@ const AppProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
     setContractAddr(contractAddress);
   };
 
+  /* validatorPrefix = "val", consensusPrefix = "cons", publicPrefix = "pub", operatorPrefix = "oper" */
   const connectWallet = async () => {
     try {
-      const vectis = await getVectisForCosmos();
-
       const localnet = {
         chainId: "pulsar-dev-1",
         chainName: "localhost",
-        prettyName: "Pulsarium DevNet",
-        rpcUrl: "http://localhost:26657",
-        restUrl: "http://localhost:1317",
+        /* prettyName: "Pulsarium DevNet", */
+        rpc: "http://192.168.178.86:26657",
+        rest: "http://192.168.178.86:1317",
         bech32Prefix: "pulsar",
+        bech32Config: {
+          bech32PrefixAccAddr: "pulsar",
+          bech32PrefixAccPub: "pulsarpub",
+          bech32PrefixValAddr: "pulsarvaloper",
+          bech32PrefixValPub: "pulsarvaloperpub",
+          bech32PrefixConsAddr: "pulsevalcons",
+          bech32PrefixConsPub: "pulsarvalconspub",
+        },
         bip44: {
           coinType: 118
         }, 
@@ -105,15 +119,30 @@ const AppProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
           }
         }],
         features: [],
-        currencies: [],
+        currencies: [{
+          coinDenom: "Pulse",
+          coinMinimalDenom: "upulse",
+          coinDecimals: 6,
+          gasPriceStep: {
+            low: 0.01,
+            average: 0.025,
+            high: 0.04
+          }
+        }],
         ecosystem: 'cosmos',
       };
-      await vectis.suggestChains([localnet]);
+      await window.keplr.experimentalSuggestChain(localnet);
+
+      await window.keplr.enable("pulsar-dev-1");
+
+      const signer = window.keplr.getOfflineSigner("pulsar-dev-1");
+
+      const key = await signer.getAccounts();
 
       // Enable connection to allow read and write permission;
-      const key = await vectis.getKey(chain);
+      /* const key = await vectis.getKey(chain); */
       // This method decide for you what is the best signer to sign transaction
-      const signer = await vectis.getOfflineSignerDirect(chain);
+      /* const signer = await vectis.getOfflineSignerDirect(chain); */
 
       const config = CHAIN_CONFIG[chain as keyof typeof CHAIN_CONFIG];
       const tendermintClient = await Tendermint37Client.connect(config.rpcUrl);
@@ -131,8 +160,8 @@ const AppProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
       // // TODO: Try to send (demo)
       // await client.sendTokens(address, "pulsar1hsm76p4ahyhl5yh3ve9ur49r5kemhp2rwdtsdr", [{ amount: "1000000", denom: "upulse" }], "auto", "Sent from Vectis");
 
-      setUserKey(key);
-      setVectisClient(vectis);
+      setUserKey(key[0]);
+      /* setVectisClient(vectis); */
       setClient(client);
       setAllowPermission(true);
     } catch (err) {
@@ -186,12 +215,6 @@ const AppProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   useEffect(() => {
     if (allowPermission) connectWallet();
   }, [chain]);
-
-  useEffect(() => {
-    if (!vectisClient) return;
-    vectisClient.onAccountChange(connectWallet);
-    return () => vectisClient.offAccountChange(connectWallet);
-  }, [vectisClient]);
 
   useEffect(() => {
     if (!contractAddr || !client) return;

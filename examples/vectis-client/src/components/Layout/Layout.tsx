@@ -12,6 +12,8 @@ const chains = [
 
 const Layout: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   const { connectWallet, userKey, chain, setChain } = useAppContext();
+  console.log("chain", chain);
+  console.log("userKey", userKey);
   return (
     <div className="flex flex-col min-h-screen justify-between">
       <nav className="max-w-[1000px] p-4 mx-auto w-full flex items-center justify-between gap-4">
@@ -21,7 +23,6 @@ const Layout: React.FC<PropsWithChildren<{}>> = ({ children }) => {
               TODO's
             </p>
             <div className="text-white text-md flex gap-4 justify-center items-center mx-4">
-              {userKey.name}{" "}
               <SimpleDropdown options={chains.map(({ name, chainId }) => ({ name, click: () => setChain(chainId) }))}>{chain}</SimpleDropdown>
             </div>
           </>
