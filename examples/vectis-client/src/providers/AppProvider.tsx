@@ -121,6 +121,8 @@ const AppProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
         tendermintClient,
         signer, {
           gasPrice: config.gasPrice,
+          broadcastPollIntervalMs: 700,
+          broadcastTimeoutMs: 4500,
         });
 
       // // TODO: remove only for demo
