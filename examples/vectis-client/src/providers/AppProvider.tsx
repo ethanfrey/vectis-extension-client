@@ -12,7 +12,7 @@ import { TodoStatus } from "../interfaces/TodoStatus";
 const CODES_ID = {
   "uni-6": 2545,
   "elgafar-1": 2609,
-  "pulsar-dev-1": 4,
+  "pulsar-dev-1": 1,
 };
 
 const CHAIN_CONFIG = {
