@@ -13,6 +13,8 @@
     "@cosmjs/proto-signing": "^0.30.1",
     "@cosmjs/stargate": "^0.30.1",
     "@cosmjs/tendermint-rpc": "^0.30.1",
+    "@keplr-wallet/cosmos": "^0.12.14",
+    "@keplr-wallet/crypto": "^0.12.14",
     "@vectis/extension-client": "^0.7.2",
     "clsx": "^1.2.1",
     "dotenv": "^16.0.3",
